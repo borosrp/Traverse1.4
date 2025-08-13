@@ -145,7 +145,6 @@
     box-shadow: none;
   }
   
-  /* UPDATED: Active button style */
   @keyframes pulse-grey {
     0% { box-shadow: var(--shadow-medium), 0 0 0 0 rgba(108, 117, 125, 0.7); }
     70% { box-shadow: var(--shadow-medium), 0 0 0 10px rgba(108, 117, 125, 0); }
@@ -166,6 +165,9 @@
   .grid button.active.empty-category {
     background: var(--card-bg);
     color: var(--muted); /* Grey text */
+  }
+  .grid button.active .time-icon {
+    color: var(--muted) !important;
   }
 
 
@@ -1361,10 +1363,8 @@ const db = (() => {
     let yPos = 80;
     if (entry.note) {
         doc.setFontSize(18);
-        doc.text('Notiz:', 10, yPos);
-        yPos += 15;
-        const splitText = doc.splitTextToSize(entry.note, 180);
-        doc.setFontSize(15);
+        const noteWithLabel = `Notiz: ${entry.note}`;
+        const splitText = doc.splitTextToSize(noteWithLabel, 180);
         doc.text(splitText, 10, yPos);
         yPos += (splitText.length * 10);
     }
