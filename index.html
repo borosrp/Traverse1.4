@@ -334,10 +334,13 @@
   th:last-child { border-top-right-radius: 8px; }
   tr:last-child td { border-bottom: none; }
 
-  /* UPDATED: Styles for traverse header */
   #traverse-header.active-header {
     font-size: 1.35em;
     font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
   }
   #traverse-header.has-data {
     color: var(--primary);
@@ -345,13 +348,16 @@
   #traverse-header.is-empty {
     color: var(--muted);
   }
+  #traverse-header .fas {
+    font-size: 0.8em;
+  }
 
 
-  th:nth-child(1), td:nth-child(1) { width: 5%; }
+  th:nth-child(1), td:nth-child(1) { width: 8%; }
   th:nth-child(2), td:nth-child(2) { width: 23%; }
   th:nth-child(3), td:nth-child(3) { width: 15%; }
   th:nth-child(4), td:nth-child(4) { width: 8%; }
-  th:nth-child(5), td:nth-child(5) { width: 28%; }
+  th:nth-child(5), td:nth-child(5) { width: 25%; }
   th:nth-child(6), td:nth-child(6) { width: 5%; }
   th:nth-child(7), td:nth-child(7) { width: 8%; }
   th:nth-child(8), td:nth-child(8) { width: 8%; }
@@ -427,7 +433,6 @@
     to { background-color: #ffffff; color: var(--danger); }
   }
 
-  /* UPDATED: Image layout in table cell */
   td.photo-cell {
     padding: 10px;
   }
@@ -482,14 +487,20 @@
     background: rgba(0,0,0,0.6);
     display: none;
     flex-direction: column;
-    justify-content: flex-start;
+    justify-content: center;
     align-items: center;
     z-index: 9999;
     padding: 20px;
-    padding-top: 5vh;
     box-sizing: border-box;
-    overflow-y: auto;
+    overflow: auto; /* Allow scrolling in both directions */
   }
+  
+  /* NEW: Style for overlay when image is zoomed */
+  #imageModal.image-zoomed-in {
+    justify-content: flex-start; /* Align to top-left for scrolling */
+    align-items: flex-start;
+  }
+
   #customPromptModal, #noteModal {
     padding-top: 20vh;
   }
@@ -618,7 +629,8 @@
     transition: max-width 0.3s ease, max-height 0.3s ease;
   }
 
-  #imageModal img.zoomed {
+  /* UPDATED: Style for zoomed-in image */
+  #imageModal.image-zoomed-in #modalImage {
     max-width: none;
     max-height: none;
     cursor: zoom-out;
@@ -1031,22 +1043,9 @@ const db = (() => {
     try {
         entries = await db.getEntriesForCategory(currentCategory);
         categoryLabelLeft.textContent = `${num}`;
-        const isEmpty = entries.length === 0;
-
-        traverseHeader.textContent = num;
-        traverseHeader.classList.add('active-header');
-
-        if (isEmpty) {
-            categoryLabelLeft.style.color = 'var(--muted)';
-            traverseHeader.classList.add('is-empty');
-            traverseHeader.classList.remove('has-data');
-        } else {
-            categoryLabelLeft.style.color = 'var(--primary)';
-            traverseHeader.classList.add('has-data');
-            traverseHeader.classList.remove('is-empty');
-        }
+        updateTraverseHeader(); // Update header
         
-        updateControlButtonsColor(isEmpty);
+        updateControlButtonsColor(entries.length === 0);
         mainControls.style.display = 'block';
         listSection.style.display = 'block';
         renderTable();
@@ -1055,6 +1054,31 @@ const db = (() => {
     catch (e) {
         console.error("Fehler beim Lesen der Datenbank:", e);
         showCustomAlert('Fehler beim Laden der Traverse.', 'Fehler');
+    }
+  }
+
+  // NEW: Helper function to update the traverse header
+  function updateTraverseHeader() {
+    if (!currentCategory) {
+        traverseHeader.innerHTML = '#';
+        traverseHeader.className = '';
+        return;
+    }
+
+    traverseHeader.classList.add('active-header');
+    const isEmpty = entries.length === 0;
+
+    if (isEmpty) {
+        traverseHeader.innerHTML = `<span>${currentCategory}</span>`;
+        traverseHeader.classList.add('is-empty');
+        traverseHeader.classList.remove('has-data');
+    } else {
+        const latestEntry = entries.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+        const entryHour = new Date(latestEntry.date).getHours();
+        const iconClass = entryHour < 14 ? 'fa-sun' : 'fa-moon';
+        traverseHeader.innerHTML = `<span>${currentCategory}</span> <i class="fas ${iconClass}"></i>`;
+        traverseHeader.classList.add('has-data');
+        traverseHeader.classList.remove('is-empty');
     }
   }
 
@@ -1475,6 +1499,7 @@ const db = (() => {
               entries = entries.filter(e => e.id !== id);
               renderTable();
               await updateCategoryButtonColors();
+              updateTraverseHeader(); // Update header after deletion
 
               const count = await db.getEntryCountForCategory(currentCategory);
               if (count === 0) {
@@ -1643,18 +1668,17 @@ const db = (() => {
       };
 
       try {
+          const wasEmpty = entries.length === 0; // Check before adding
           const newId = await db.addEntry(newEntry);
           newEntry.id = newId;
           entries.push(newEntry);
           renderTable();
           await updateCategoryButtonColors();
 
-          if (entries.length === 1) { // First entry added
+          if (wasEmpty) { // If it was empty before
               categoryLabelLeft.style.color = 'var(--primary)'; 
               updateControlButtonsColor(false);
-              // UPDATED: Refresh header style
-              traverseHeader.classList.add('has-data');
-              traverseHeader.classList.remove('is-empty');
+              updateTraverseHeader(); // Refresh header style and content
           }
 
           const webAppUrl = 'https://script.google.com/macros/s/AKfycbz7cN31qlQVBxpMmJIpyyV-bDHaI-i3vxG06vPv3pKurSpdxVHDKcN95oJtfAME2P_5/exec';
@@ -1782,7 +1806,7 @@ const db = (() => {
   document.getElementById('imageModalNextBtn').addEventListener('click', showNextImage);
   
   modalImage.addEventListener('click', () => {
-    modalImage.classList.toggle('zoomed');
+    imageModal.classList.toggle('image-zoomed-in');
   });
 
   imageModal.addEventListener('click', (e) => {
