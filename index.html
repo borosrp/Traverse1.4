@@ -1056,7 +1056,7 @@ const db = (() => {
     }
   }
 
-  // NEW: Helper function to update the traverse header
+  // UPDATED: Helper function to update the traverse header
   function updateTraverseHeader() {
     if (!currentCategory) {
         traverseHeader.innerHTML = '#';
@@ -1072,10 +1072,7 @@ const db = (() => {
         traverseHeader.classList.add('is-empty');
         traverseHeader.classList.remove('has-data');
     } else {
-        const latestEntry = entries.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-        const entryHour = new Date(latestEntry.date).getHours();
-        const iconClass = entryHour < 14 ? 'fa-sun' : 'fa-moon';
-        traverseHeader.innerHTML = `<span>${currentCategory}</span> <i class="fas ${iconClass}"></i>`;
+        traverseHeader.innerHTML = `<span>${currentCategory}</span>`;
         traverseHeader.classList.add('has-data');
         traverseHeader.classList.remove('is-empty');
     }
