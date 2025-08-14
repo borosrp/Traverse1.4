@@ -353,7 +353,7 @@
   }
 
 
-  th:nth-child(1), td:nth-child(1) { width: 8%; }
+  th:nth-child(1), td:nth-child(1) { width: auto; } /* Let the browser decide the width */
   th:nth-child(2), td:nth-child(2) { width: 23%; }
   th:nth-child(3), td:nth-child(3) { width: 15%; }
   th:nth-child(4), td:nth-child(4) { width: 8%; }
@@ -495,7 +495,6 @@
     overflow: auto; /* Allow scrolling in both directions */
   }
   
-  /* NEW: Style for overlay when image is zoomed */
   #imageModal.image-zoomed-in {
     justify-content: flex-start; /* Align to top-left for scrolling */
     align-items: flex-start;
